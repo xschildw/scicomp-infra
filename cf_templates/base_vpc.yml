@@ -8,11 +8,15 @@ Parameters:
   VpcSubnetPrefix:
     Description: The VPC subnet prefix (i.e. 10.40)
     Type: String
-  PublicSubnetZones:
-    Description: Availability zones for public subnets
-    Type: List<AWS::EC2::AvailabilityZone::Name>
-    ConstraintDescription: List of Availability Zones in a region, such as us-east-1a, us-east-1b, us-east-1c
-    Default: "us-east-1a, us-east-1b, us-east-1c"
+  SubnetZone:
+    Description: Availability zone for public subnet
+    Type: String
+    AllowedValues:
+      - us-east-1a
+      - us-east-1b
+      - us-east-1c
+      - us-east-1d
+    Default: us-east-1a
   VpnCidr:
     Description: CIDR of the (sophos-utm) VPN
     Type: String
@@ -53,9 +57,7 @@ Resources:
         - '.'
         - - !Ref VpcSubnetPrefix
           - !FindInMap [SubnetConfig, Public, CIDR]
-      AvailabilityZone: !Select
-        - 0
-        - !Ref PublicSubnetZones
+      AvailabilityZone: !Ref SubnetZone
       Tags:
         -
           Key: "Application"
