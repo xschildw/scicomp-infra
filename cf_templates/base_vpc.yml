@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  Creates a VPC with public and private subnets and a managed NAT gateway (to be shared with other possible subnets).
+  Creates a VPC with public subnet, an Internet gateway and a managed NAT gateway (to be shared with other possible subnets).
 Parameters:
   VpcName:
     Description: The VPC name (i.e. Synapse-Prod)
@@ -10,11 +10,6 @@ Parameters:
     Type: String
   PublicSubnetZones:
     Description: Availability zones for public subnets
-    Type: List<AWS::EC2::AvailabilityZone::Name>
-    ConstraintDescription: List of Availability Zones in a region, such as us-east-1a, us-east-1b, us-east-1c
-    Default: "us-east-1a, us-east-1b, us-east-1c"
-  PrivateSubnetZones:
-    Description: Availability zones for private subnets
     Type: List<AWS::EC2::AvailabilityZone::Name>
     ConstraintDescription: List of Availability Zones in a region, such as us-east-1a, us-east-1b, us-east-1c
     Default: "us-east-1a, us-east-1b, us-east-1c"
@@ -28,8 +23,6 @@ Mappings:
       CIDR: "0.0/16"
     Public:
       CIDR: "0.0/24"
-    Private:
-      CIDR: "1.0/24"
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"
@@ -74,28 +67,6 @@ Resources:
         -
           Key: "Name"
           Value: "Public"
-  PrivateSubnet:
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Join
-        - '.'
-        - - !Ref VpcSubnetPrefix
-          - !FindInMap [SubnetConfig, Private, CIDR]
-      AvailabilityZone: !Select
-        - 0
-        - !Ref PrivateSubnetZones
-      Tags:
-        -
-          Key: "Application"
-          Value:
-            Ref: "AWS::StackName"
-        -
-          Key: "Network"
-          Value: "Private"
-        -
-          Key: "Name"
-          Value: "Private"
   InternetGateway:
     Type: "AWS::EC2::InternetGateway"
     Properties:
@@ -110,7 +81,7 @@ Resources:
         -
           Key: "Name"
           Value: "Public"
-  GatewayToInternet:
+  GatewayAttachment:
     Type: "AWS::EC2::VPCGatewayAttachment"
     Properties:
       VpcId:
@@ -135,7 +106,7 @@ Resources:
           Value: "Public"
   PublicRoute:
     Type: "AWS::EC2::Route"
-    DependsOn: "GatewayToInternet"
+    DependsOn: "GatewayAttachment"
     Properties:
       RouteTableId:
         Ref: "PublicRouteTable"
@@ -211,37 +182,6 @@ Resources:
     Type: "AWS::EC2::EIP"
     Properties:
       Domain: "vpc"
-  PrivateRouteTable:
-    Type: "AWS::EC2::RouteTable"
-    Properties:
-      VpcId:
-        Ref: "VPC"
-      Tags:
-        -
-          Key: "Application"
-          Value:
-            Ref: "AWS::StackName"
-        -
-          Key: "Network"
-          Value: "Private"
-        -
-          Key: "Name"
-          Value: "Private"
-  PrivateRouteToInternet:
-    Type: "AWS::EC2::Route"
-    Properties:
-      RouteTableId:
-        Ref: "PrivateRouteTable"
-      DestinationCidrBlock: "0.0.0.0/0"
-      NatGatewayId:
-        Ref: "NATGateway"
-  PrivateSubnetRouteTableAssociation:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
-    Properties:
-      SubnetId:
-        Ref: "PrivateSubnet"
-      RouteTableId:
-        Ref: "PrivateRouteTable"
   VpnSecurityGroup:
     DependsOn: "VPC"
     Type: 'AWS::EC2::SecurityGroup'
@@ -289,18 +229,6 @@ Outputs:
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PublicRouteTable']]
-  PrivateSubnet:
-    Description: "SubnetId of the private subnet"
-    Value: !Ref PrivateSubnet
-    Export:
-      Name:
-        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PrivateSubnet']]
-  PrivateRouteTable:
-    Description: "Route table Id for private subnets"
-    Value: !Ref PrivateRouteTable
-    Export:
-      Name:
-        !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PrivateRouteTable']]
   VpcDefaultSecurityGroup:
     Description: "VPC DefaultSecurityGroup Id "
     Value: { "Fn::GetAtt" : ["VPC", "DefaultSecurityGroup"] }
