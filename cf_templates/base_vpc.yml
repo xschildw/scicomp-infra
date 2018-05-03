@@ -22,7 +22,7 @@ Mappings:
     VPC:
       CIDR: "0.0/16"
     Public:
-      CIDR: "0.0/24"
+      CIDR: "255.0/24"
 Resources:
   VPC:
     Type: "AWS::EC2::VPC"
@@ -40,7 +40,7 @@ Resources:
             Ref: "AWS::StackName"
         -
           Key: "Network"
-          Value: "Public, Private"
+          Value: "Public"
         -
           Key: "Name"
           Value: !Ref VpcName
@@ -169,7 +169,7 @@ Resources:
         Ref: "PublicSubnet"
       NetworkAclId:
         Ref: "PublicNetworkAcl"
-  NATGateway:
+  NatGateway:
     Type: "AWS::EC2::NatGateway"
     Properties:
       AllocationId:
@@ -217,6 +217,11 @@ Outputs:
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VpcCidr']]
+  VPCSubnetPrefix:
+    Description: "VPC subnet prefix"
+    Value: !Ref VpcSubnetPrefix
+    Export:
+      Name: !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VpcSubnetPrefix']]
   PublicSubnet:
     Description: "SubnetId of the public subnet"
     Value: !Ref PublicSubnet
@@ -246,13 +251,8 @@ Outputs:
     Value: !Ref InternetGateway
     Export:
       Name: !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'InternetGateway']]
-  NATGateway:
+  NatGateway:
     Description: "NAT Gateway"
-    Value: !Ref NATGateway
+    Value: !Ref NatGateway
     Export:
-      Name: !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'NATGateway']]
-  VPCSubnetPrefix:
-    Description: "VPC subnet prefix"
-    Value: !Ref VpcSubnetPrefix
-    Export:
-      Name: !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'VpcSubnetPrefix']]
+      Name: !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'NatGateway']]
