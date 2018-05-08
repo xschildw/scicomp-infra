@@ -68,7 +68,7 @@ Resources:
           Value: "Public"
         -
           Key: "Name"
-          Value: "Public"
+          Value: !Join ["-", [!Ref VpcName, "public"]]
   InternetGateway:
     Type: "AWS::EC2::InternetGateway"
     Properties:

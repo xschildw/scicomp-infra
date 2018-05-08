@@ -2,6 +2,9 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
   Creates a subnet of arbitrary size connected to a given base VPC
 Parameters:
+  SubnetName:
+    Description: The name (tag) of the subnet
+    Type: String
   SubnetSuffix:
     Description: The VPC subnet suffix (e.g. 0.2/8)
     Type: String
@@ -30,11 +33,8 @@ Resources:
     Condition: PublicSubnetType
     Properties:
       MapPublicIpOnLaunch: true
-      VpcId: !ImportValue us-east-1-basevpc-VPCId
-      CidrBlock: !Join
-        - '.'
-        - - !ImportValue us-east-1-basevpc-VpcSubnetPrefix
-          - !Ref SubnetSuffix
+      VpcId: !ImportValue us-east-1-computevpc-base-VPCId
+      CidrBlock: !Join [".", [!ImportValue us-east-1-computevpc-base-VpcSubnetPrefix, !Ref SubnetSuffix]]
       AvailabilityZone: !Ref SubnetZone
       Tags:
         -
@@ -46,12 +46,12 @@ Resources:
           Value: "Public"
         -
           Key: "Name"
-          Value: "Public"
+          Value: !Ref SubnetName
   PublicRouteTable:
     Type: "AWS::EC2::RouteTable"
     Condition: PublicSubnetType
     Properties:
-      VpcId: !ImportValue us-east-1-basevpc-VPCId
+      VpcId: !ImportValue us-east-1-computevpc-base-VPCId
       Tags:
         -
           Key: "Application"
@@ -62,7 +62,7 @@ Resources:
           Value: "Public"
         -
           Key: "Name"
-          Value: "Public"
+          Value: !Join ["-", [!Ref SubnetName, "RouteTable"]]
   PublicRoute:
     Type: "AWS::EC2::Route"
     Condition: PublicSubnetType
@@ -70,7 +70,7 @@ Resources:
       RouteTableId:
         Ref: "PublicRouteTable"
       DestinationCidrBlock: "0.0.0.0/0"
-      GatewayId: !ImportValue us-east-1-basevpc-InternetGateway
+      GatewayId: !ImportValue us-east-1-computevpc-base-InternetGateway
   PublicSubnetRouteTableAssociation:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Condition: PublicSubnetType
@@ -83,7 +83,7 @@ Resources:
     Type: "AWS::EC2::NetworkAcl"
     Condition: PublicSubnetType
     Properties:
-      VpcId: !ImportValue us-east-1-basevpc-VPCId
+      VpcId: !ImportValue us-east-1-computevpc-base-VPCId
       Tags:
         -
           Key: "Application"
@@ -94,7 +94,7 @@ Resources:
           Value: "Public"
         -
           Key: "Name"
-          Value: "Public"
+          Value: !Join ["-", [!Ref SubnetName, "NetworkAcl"]]
   InboundHTTPPublicNetworkAclEntry:
     Type: "AWS::EC2::NetworkAclEntry"
     Condition: PublicSubnetType
@@ -136,11 +136,8 @@ Resources:
     Type: "AWS::EC2::Subnet"
     Condition: PrivateSubnetType
     Properties:
-      VpcId: !ImportValue us-east-1-basevpc-VPCId
-      CidrBlock: !Join
-        - '.'
-        - - !ImportValue us-east-1-basevpc-VpcSubnetPrefix
-          - !Ref SubnetSuffix
+      VpcId: !ImportValue us-east-1-computevpc-base-VPCId
+      CidrBlock: !Join [".", [!ImportValue us-east-1-computevpc-base-VpcSubnetPrefix, !Ref SubnetSuffix]]
       AvailabilityZone: !Ref SubnetZone
       Tags:
         -
@@ -152,12 +149,12 @@ Resources:
           Value: "Private"
         -
           Key: "Name"
-          Value: "Private"
+          Value: !Ref SubnetName
   PrivateRouteTable:
     Type: "AWS::EC2::RouteTable"
     Condition: PrivateSubnetType
     Properties:
-      VpcId: !ImportValue us-east-1-basevpc-VPCId
+      VpcId: !ImportValue us-east-1-computevpc-base-VPCId
       Tags:
         -
           Key: "Application"
@@ -168,7 +165,7 @@ Resources:
           Value: "Private"
         -
           Key: "Name"
-          Value: "Private"
+          Value: !Join ["-", [!Ref SubnetName, "RouteTable"]]
   PrivateRouteToInternet:
     Type: "AWS::EC2::Route"
     Condition: PrivateSubnetType
@@ -176,7 +173,7 @@ Resources:
       RouteTableId:
         Ref: "PrivateRouteTable"
       DestinationCidrBlock: "0.0.0.0/0"
-      NatGatewayId: !ImportValue us-east-1-basevpc-NatGateway
+      NatGatewayId: !ImportValue us-east-1-computevpc-base-NatGateway
   PrivateSubnetRouteTableAssociation:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Condition: PrivateSubnetType
