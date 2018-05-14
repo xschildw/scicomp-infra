@@ -105,7 +105,7 @@ Resources:
           Value: "Public"
         -
           Key: "Name"
-          Value: "Public"
+          Value: !Join ["-", [!Ref VpcName, "public", "RouteTable"]]
   PublicRoute:
     Type: "AWS::EC2::Route"
     DependsOn: "GatewayAttachment"
@@ -115,6 +115,31 @@ Resources:
       DestinationCidrBlock: "0.0.0.0/0"
       GatewayId:
         Ref: "InternetGateway"
+  PrivateRouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId:
+        Ref: "VPC"
+      Tags:
+        -
+          Key: "Application"
+          Value:
+            Ref: "AWS::StackName"
+        -
+          Key: "Network"
+          Value: "Public"
+        -
+          Key: "Name"
+          Value: !Join ["-", [!Ref VpcName, "private", "RouteTable"]]
+  PrivateRoute:
+    Type: "AWS::EC2::Route"
+    DependsOn: "NatGateway"
+    Properties:
+      RouteTableId:
+        Ref: "PrivateRouteTable"
+      DestinationCidrBlock: "0.0.0.0/0"
+      NatGatewayId:
+        Ref: "NatGateway"
   PublicSubnetRouteTableAssociation:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
@@ -236,6 +261,12 @@ Outputs:
     Export:
       Name:
         !Join ['-', [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PublicRouteTable']]
+  PrivateRouteTable:
+    Description: "Route table for private subnets"
+    Value: !Ref PrivateRouteTable
+    Export:
+      Name:
+        !Join ["-", [!Ref 'AWS::Region', !Sub '${AWS::StackName}', 'PrivateRouteTable']]
   VpcDefaultSecurityGroup:
     Description: "VPC DefaultSecurityGroup Id "
     Value: { "Fn::GetAtt" : ["VPC", "DefaultSecurityGroup"] }
