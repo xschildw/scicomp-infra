@@ -1,0 +1,6 @@
+template_path: templates/user_vpc.yaml
+stack_name: user-public-subnet
+parameters:
+  SubnetType: public
+  SubnetSuffix: "0.0/20"
+  SubnetZone: public

@@ -1,0 +1,6 @@
+template_path: templates/vpc-base.yaml
+stack_name: computevpc-base
+parameters:
+  VpcSubnetPrefix: "10.15"
+  VpcName: computevpc-base
+  SubnetZone: us-east-1a

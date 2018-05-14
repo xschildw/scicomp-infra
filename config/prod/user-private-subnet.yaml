@@ -1,0 +1,6 @@
+template_path: templates/user_vpc.yaml
+stack_name: user-private-subnet
+parameters:
+  SubnetType: private
+  SubnetSuffix: "16.0/20"
+  SubnetZone: "us-east-1a"

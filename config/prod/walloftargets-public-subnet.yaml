@@ -1,0 +1,6 @@
+template_path: templates/user_vpc.yaml
+stack_name: walloftargets-public-subnet
+parameters:
+  SubnetType: public
+  SubnetSuffix: "254.0/24"
+  SubnetZone: "us-east-1a"
