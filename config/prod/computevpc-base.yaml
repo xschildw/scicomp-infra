@@ -1,4 +1,4 @@
-template_path: templates/vpc-base.yaml
+template_path: templatesi/base_vpc.yaml
 stack_name: computevpc-base
 parameters:
   VpcSubnetPrefix: "10.15"
